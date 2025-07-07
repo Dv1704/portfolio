@@ -1232,15 +1232,19 @@
             <h2 class="section-heading">Get In Touch</h2>
             <div class="contact-card">
                 <p>I'm always excited about new challenges and opportunities. Whether you're looking to hire, collaborate on a project, or just want to chat about tech, feel free to reach out!</p>
-<form action="mailto:victorolanikanju@gmail.com" method="POST" enctype="text/plain">
-  <label>Name</label>
-  <input type="text" name="name" required><br>
-  <label>Email</label>
-  <input type="email" name="email" required><br>
-  <label>Message</label>
-  <textarea name="message" required></textarea><br>
-  <button type="submit">Send</button>
-</form>
+
+                <form class="contact-form" id="contactForm" action="https://formspree.io/f/myzjqydy" method="POST">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-button" id="submitButton">Send Message</button>
+                    <p class="form-status-message" id="formStatus"></p>
+                </form>
 
                 <div class="direct-contact-info">
                     <h4>Or find me here:</h4>
@@ -1312,34 +1316,53 @@
             });
         });
 
-        // --- Contact Form Submission (Client-side simulation) ---
+        // --- Contact Form Submission (using Formspree) ---
         const contactForm = document.getElementById('contactForm');
         const submitButton = document.getElementById('submitButton');
         const formStatus = document.getElementById('formStatus');
 
         contactForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Prevent default form submission
+
             submitButton.disabled = true;
             submitButton.textContent = 'Sending...';
             formStatus.className = 'form-status-message'; // Reset classes
             formStatus.textContent = '';
 
-            // Simulate API call (replace with actual fetch to your backend/Formspree)
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+            const formData = new FormData(contactForm);
 
-            const success = true; // For demonstration, assume success
+            try {
+                const response = await fetch(contactForm.action, {
+                    method: contactForm.method,
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json' // Important for Formspree to return JSON
+                    }
+                });
 
-            if (success) {
-                formStatus.classList.add('success');
-                formStatus.textContent = 'Message sent successfully! I\'ll get back to you soon.';
-                contactForm.reset(); // Clear form fields
-            } else {
+                if (response.ok) {
+                    formStatus.classList.add('success');
+                    formStatus.textContent = 'Message sent successfully! I\'ll get back to you soon.';
+                    contactForm.reset(); // Clear form fields
+                } else {
+                    // Handle non-OK responses (e.g., Formspree validation errors)
+                    const data = await response.json();
+                    if (data.errors) {
+                        formStatus.classList.add('error');
+                        formStatus.textContent = data.errors.map(error => error.message).join(', ');
+                    } else {
+                        formStatus.classList.add('error');
+                        formStatus.textContent = 'Oops! Something went wrong. Please try again later.';
+                    }
+                }
+            } catch (error) {
+                console.error('Form submission error:', error);
                 formStatus.classList.add('error');
-                formStatus.textContent = 'Oops! Something went wrong. Please try again later or contact directly.';
+                formStatus.textContent = 'Network error. Please check your connection or try again later.';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Send Message';
             }
-
-            submitButton.disabled = false;
-            submitButton.textContent = 'Send Message';
         });
 
         // --- Scroll Reveal Animation ---
